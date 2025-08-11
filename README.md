@@ -2,7 +2,7 @@
 
 1️⃣ **Clone o repositório**  
 ```bash
-git clone https://github.com/SEU-USUARIO/gestor-pedidos.git
+git clone http://github.com/caioomega/gestordepedidos-PY/new/master?filename=README.md
 2️⃣ Acesse a pasta do projeto
 
 bash
