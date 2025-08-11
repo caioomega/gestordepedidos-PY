@@ -1,0 +1,9 @@
+# Ignora tudo
+*
+
+# Mas não ignore estas pastas/arquivos:
+!scripts/
+!package.json
+
+# Opcional: não ignore o próprio .gitignore
+!.gitignore
