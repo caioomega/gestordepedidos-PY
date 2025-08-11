@@ -1,4 +1,4 @@
-# 📦 Sistema de Gestão de Pedidos (Python)
+# 📦 Sistema de Gestão de Pedidos (Python - Mude para a branch master) 
 
 ![Python](https://img.shields.io/badge/Python-3.x-blue?logo=python&logoColor=white)
 ![Status](https://img.shields.io/badge/Status-Ativo-brightgreen)
