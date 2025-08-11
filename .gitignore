@@ -1,9 +1,12 @@
 # Ignora tudo
 *
 
-# Mas não ignore estas pastas/arquivos:
+# Não ignore a pasta scripts e todo o seu conteúdo
 !scripts/
+!scripts/**
+
+# Não ignore o package.json
 !package.json
 
-# Opcional: não ignore o próprio .gitignore
+# Não ignore o próprio .gitignore
 !.gitignore
