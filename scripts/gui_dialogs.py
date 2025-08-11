@@ -477,16 +477,16 @@ class CotacaoDialog:
         # Criar janela
         self.window = tk.Toplevel(parent)
         self.window.title("Nova Cotação" if not id_cotacao else "Editar Cotação")
-        self.window.geometry("900x700")
+        self.window.geometry("1200x800")
         self.window.resizable(True, True)
         self.window.transient(parent)
         self.window.grab_set()
         
         # Centralizar janela
         self.window.update_idletasks()
-        x = (self.window.winfo_screenwidth() // 2) - (900 // 2)
-        y = (self.window.winfo_screenheight() // 2) - (700 // 2)
-        self.window.geometry(f"900x700+{x}+{y}")
+        x = (self.window.winfo_screenwidth() // 2) - (1200 // 2)
+        y = (self.window.winfo_screenheight() // 2) - (800 // 2)
+        self.window.geometry(f"1200x800+{x}+{y}")
         
         self.window.configure(bg='#f0f0f0')
         
@@ -503,53 +503,143 @@ class CotacaoDialog:
     
     def setup_ui(self):
         """Configura interface do diálogo"""
-        # Frame principal
-        main_frame = tk.Frame(self.window, bg='#f0f0f0', padx=20, pady=20)
+        # Frame principal com scroll
+        canvas = tk.Canvas(self.window, bg='#f0f0f0')
+        scrollbar = ttk.Scrollbar(self.window, orient="vertical", command=canvas.yview)
+        scrollable_frame = tk.Frame(canvas, bg='#f0f0f0')
+        
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+        
+        main_frame = tk.Frame(scrollable_frame, bg='#f0f0f0', padx=20, pady=20)
         main_frame.pack(fill=tk.BOTH, expand=True)
         
-        # Header
-        header_frame = tk.Frame(main_frame, bg='#f0f0f0')
+        header_frame = tk.Frame(main_frame, bg='#f0f0f0', relief='solid', bd=2)
         header_frame.pack(fill=tk.X, pady=(0, 20))
         
-        title = "📋 Nova Cotação" if not self.id_cotacao else "✏️ Editar Cotação"
-        title_label = tk.Label(header_frame, text=title, 
-                              font=('Segoe UI', 18, 'bold'), 
-                              bg='#f0f0f0', fg='#2c3e50')
-        title_label.pack()
+        # Logo e dados da empresa
+        empresa_frame = tk.Frame(header_frame, bg='#f0f0f0')
+        empresa_frame.pack(fill=tk.X, padx=10, pady=10)
         
-        # Frame de dados básicos
-        dados_frame = tk.LabelFrame(main_frame, text="📞 Dados da Cotação", 
-                                   font=('Segoe UI', 12, 'bold'),
-                                   bg='#f0f0f0', fg='#34495e', 
-                                   padx=15, pady=10)
-        dados_frame.pack(fill=tk.X, pady=(0, 15))
+        # Logo (simulado)
+        logo_frame = tk.Frame(empresa_frame, bg='#2c3e50', width=80, height=60)
+        logo_frame.pack(side=tk.LEFT, padx=(0, 20))
+        logo_frame.pack_propagate(False)
+        tk.Label(logo_frame, text="LOGO", font=('Segoe UI', 12, 'bold'), 
+                bg='#2c3e50', fg='white').pack(expand=True)
         
-        # Cliente
-        tk.Label(dados_frame, text="Cliente:", font=('Segoe UI', 10, 'bold'), 
-                bg='#f0f0f0', fg='#2c3e50').grid(row=0, column=0, sticky=tk.W, padx=(0, 10), pady=5)
+        # Dados da empresa
+        empresa_info = tk.Frame(empresa_frame, bg='#f0f0f0')
+        empresa_info.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        
+        tk.Label(empresa_info, text="FLAVIO MEGA REPRESENTAÇÕES COMERCIAIS LTDA", 
+                font=('Segoe UI', 14, 'bold'), bg='#f0f0f0', fg='#2c3e50').pack(anchor=tk.W)
+        tk.Label(empresa_info, text="RUA EXEMPLO, 123 - CENTRO - CIDADE/SP", 
+                font=('Segoe UI', 10), bg='#f0f0f0', fg='#34495e').pack(anchor=tk.W)
+        tk.Label(empresa_info, text="CNPJ: 00.000.000/0001-00 - TEL: (19) 99713-7010", 
+                font=('Segoe UI', 10), bg='#f0f0f0', fg='#34495e').pack(anchor=tk.W)
+        tk.Label(empresa_info, text="Email: caioh.mega2018@gmail.com", 
+                font=('Segoe UI', 10), bg='#f0f0f0', fg='#34495e').pack(anchor=tk.W)
+        
+        # Número da cotação
+        numero_frame = tk.Frame(empresa_frame, bg='#f0f0f0')
+        numero_frame.pack(side=tk.RIGHT)
+        tk.Label(numero_frame, text="Cotação Nº", font=('Segoe UI', 12, 'bold'), 
+                bg='#f0f0f0', fg='#e74c3c').pack()
+        self.numero_cotacao = tk.Label(numero_frame, text="001", font=('Segoe UI', 16, 'bold'), 
+                                      bg='#f0f0f0', fg='#e74c3c')
+        self.numero_cotacao.pack()
+        
+        cliente_frame = tk.LabelFrame(main_frame, text="DADOS DO CLIENTE", 
+                                     font=('Segoe UI', 12, 'bold'),
+                                     bg='#f0f0f0', fg='#2c3e50', 
+                                     padx=15, pady=10)
+        cliente_frame.pack(fill=tk.X, pady=(0, 15))
+        
+        # Linha 1: Cliente e Condições de Pagto
+        row1 = tk.Frame(cliente_frame, bg='#f0f0f0')
+        row1.pack(fill=tk.X, pady=5)
+        
+        tk.Label(row1, text="CLIENTE:", font=('Segoe UI', 10, 'bold'), 
+                bg='#f0f0f0', fg='#2c3e50').pack(side=tk.LEFT)
         
         self.cliente_var = tk.StringVar()
-        cliente_combo = ttk.Combobox(dados_frame, textvariable=self.cliente_var, 
-                                    font=('Segoe UI', 10), width=40, state="readonly")
+        cliente_combo = ttk.Combobox(row1, textvariable=self.cliente_var, 
+                                    font=('Segoe UI', 10), width=35, state="readonly")
         
         # Carregar clientes
         clientes = self.cliente_manager.listar_todos_clientes()
         cliente_values = [f"{c.id_cliente} - {c.nome}" for c in clientes]
         cliente_combo['values'] = cliente_values
-        cliente_combo.grid(row=0, column=1, sticky=tk.W, pady=5)
+        cliente_combo.pack(side=tk.LEFT, padx=(5, 20))
         
-        # Observações
-        tk.Label(dados_frame, text="Observações:", font=('Segoe UI', 10, 'bold'), 
-                bg='#f0f0f0', fg='#2c3e50').grid(row=1, column=0, sticky=tk.NW, padx=(0, 10), pady=5)
+        tk.Label(row1, text="CONDIÇÕES DE PAGTO:", font=('Segoe UI', 10, 'bold'), 
+                bg='#f0f0f0', fg='#2c3e50').pack(side=tk.LEFT)
+        self.condicoes_pagto = tk.Entry(row1, font=('Segoe UI', 10), width=15)
+        self.condicoes_pagto.pack(side=tk.LEFT, padx=5)
         
-        self.observacoes_text = tk.Text(dados_frame, height=3, width=50, 
-                                       font=('Segoe UI', 10), wrap=tk.WORD)
-        self.observacoes_text.grid(row=1, column=1, sticky=tk.W, pady=5)
+        # Linha 2: Projeto e Bairro
+        row2 = tk.Frame(cliente_frame, bg='#f0f0f0')
+        row2.pack(fill=tk.X, pady=5)
         
-        # Frame de itens
-        itens_frame = tk.LabelFrame(main_frame, text="🛒 Itens da Cotação", 
+        tk.Label(row2, text="PROJETO:", font=('Segoe UI', 10, 'bold'), 
+                bg='#f0f0f0', fg='#2c3e50').pack(side=tk.LEFT)
+        self.projeto = tk.Entry(row2, font=('Segoe UI', 10), width=30)
+        self.projeto.pack(side=tk.LEFT, padx=(5, 20))
+        
+        tk.Label(row2, text="BAIRRO:", font=('Segoe UI', 10, 'bold'), 
+                bg='#f0f0f0', fg='#2c3e50').pack(side=tk.LEFT)
+        self.bairro = tk.Entry(row2, font=('Segoe UI', 10), width=20)
+        self.bairro.pack(side=tk.LEFT, padx=5)
+        
+        # Linha 3: Complemento/Cidade/UF/CEP
+        row3 = tk.Frame(cliente_frame, bg='#f0f0f0')
+        row3.pack(fill=tk.X, pady=5)
+        
+        tk.Label(row3, text="COMPLEMENTO/CIDADE/UF/CEP:", font=('Segoe UI', 10, 'bold'), 
+                bg='#f0f0f0', fg='#2c3e50').pack(side=tk.LEFT)
+        self.endereco_completo = tk.Entry(row3, font=('Segoe UI', 10), width=50)
+        self.endereco_completo.pack(side=tk.LEFT, padx=5)
+        
+        # Linha 4: Endereço Entrega e Tel/Fax
+        row4 = tk.Frame(cliente_frame, bg='#f0f0f0')
+        row4.pack(fill=tk.X, pady=5)
+        
+        tk.Label(row4, text="ENDEREÇO ENTREGA:", font=('Segoe UI', 10, 'bold'), 
+                bg='#f0f0f0', fg='#2c3e50').pack(side=tk.LEFT)
+        self.endereco_entrega = tk.Entry(row4, font=('Segoe UI', 10), width=30)
+        self.endereco_entrega.pack(side=tk.LEFT, padx=(5, 20))
+        
+        tk.Label(row4, text="TEL/FAX:", font=('Segoe UI', 10, 'bold'), 
+                bg='#f0f0f0', fg='#2c3e50').pack(side=tk.LEFT)
+        self.tel_fax = tk.Entry(row4, font=('Segoe UI', 10), width=15)
+        self.tel_fax.pack(side=tk.LEFT, padx=5)
+        
+        # Linha 5: Inscrição Estadual e Contato
+        row5 = tk.Frame(cliente_frame, bg='#f0f0f0')
+        row5.pack(fill=tk.X, pady=5)
+        
+        tk.Label(row5, text="INSCRIÇÃO ESTADUAL:", font=('Segoe UI', 10, 'bold'), 
+                bg='#f0f0f0', fg='#2c3e50').pack(side=tk.LEFT)
+        self.inscricao_estadual = tk.Entry(row5, font=('Segoe UI', 10), width=20)
+        self.inscricao_estadual.pack(side=tk.LEFT, padx=(5, 20))
+        
+        tk.Label(row5, text="CONTATO:", font=('Segoe UI', 10, 'bold'), 
+                bg='#f0f0f0', fg='#2c3e50').pack(side=tk.LEFT)
+        self.contato = tk.Entry(row5, font=('Segoe UI', 10), width=20)
+        self.contato.pack(side=tk.LEFT, padx=5)
+        
+        itens_frame = tk.LabelFrame(main_frame, text="MATERIAL DESTINADO À REVENDA OU CONSUMO", 
                                    font=('Segoe UI', 12, 'bold'),
-                                   bg='#f0f0f0', fg='#34495e', 
+                                   bg='#f0f0f0', fg='#2c3e50', 
                                    padx=15, pady=10)
         itens_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 15))
         
@@ -571,15 +661,19 @@ class CotacaoDialog:
                  relief='flat', padx=15, pady=5,
                  cursor='hand2').pack(side=tk.LEFT)
         
-        # Treeview para itens
-        columns = ("Produto", "Quantidade", "Preço Unit.", "Subtotal")
-        self.itens_tree = ttk.Treeview(itens_frame, columns=columns, show="headings", height=8)
+        # Treeview para itens com colunas do modelo
+        columns = ("DESCRIÇÃO", "QT", "A1", "A2", "A3", "A4", "A5", "PREÇO", "UNITÁRIO", "TOTAL")
+        self.itens_tree = ttk.Treeview(itens_frame, columns=columns, show="headings", height=10)
         
         # Configurar colunas
-        column_widths = {"Produto": 300, "Quantidade": 100, "Preço Unit.": 120, "Subtotal": 120}
+        column_widths = {
+            "DESCRIÇÃO": 200, "QT": 50, "A1": 40, "A2": 40, "A3": 40, 
+            "A4": 40, "A5": 40, "PREÇO": 80, "UNITÁRIO": 80, "TOTAL": 100
+        }
         for col in columns:
             self.itens_tree.heading(col, text=col)
-            self.itens_tree.column(col, width=column_widths[col], anchor=tk.CENTER if col != "Produto" else tk.W)
+            self.itens_tree.column(col, width=column_widths[col], 
+                                  anchor=tk.CENTER if col != "DESCRIÇÃO" else tk.W)
         
         # Scrollbar para itens
         itens_scrollbar = ttk.Scrollbar(itens_frame, orient=tk.VERTICAL, command=self.itens_tree.yview)
@@ -588,25 +682,50 @@ class CotacaoDialog:
         self.itens_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, pady=5)
         itens_scrollbar.pack(side=tk.RIGHT, fill=tk.Y, pady=5)
         
-        # Frame de totais
-        totais_frame = tk.Frame(main_frame, bg='#f0f0f0')
+        totais_frame = tk.Frame(main_frame, bg='#f0f0f0', relief='solid', bd=1)
         totais_frame.pack(fill=tk.X, pady=(0, 15))
         
-        # Desconto
-        tk.Label(totais_frame, text="Desconto (%):", font=('Segoe UI', 10, 'bold'), 
-                bg='#f0f0f0', fg='#2c3e50').pack(side=tk.LEFT, padx=(0, 10))
+        # Linha de totais
+        total_row = tk.Frame(totais_frame, bg='#f0f0f0')
+        total_row.pack(fill=tk.X, padx=10, pady=10)
         
+        tk.Label(total_row, text="Quantidade total de peças:", font=('Segoe UI', 10, 'bold'), 
+                bg='#f0f0f0', fg='#2c3e50').pack(side=tk.LEFT)
+        self.qtd_total_label = tk.Label(total_row, text="0", font=('Segoe UI', 10), 
+                                       bg='#f0f0f0', fg='#2c3e50')
+        self.qtd_total_label.pack(side=tk.LEFT, padx=(5, 20))
+        
+        tk.Label(total_row, text="Desconto:", font=('Segoe UI', 10, 'bold'), 
+                bg='#f0f0f0', fg='#2c3e50').pack(side=tk.LEFT)
         self.desconto_var = tk.StringVar(value="0")
-        desconto_entry = tk.Entry(totais_frame, textvariable=self.desconto_var, 
-                                 font=('Segoe UI', 10), width=10)
-        desconto_entry.pack(side=tk.LEFT, padx=(0, 20))
+        desconto_entry = tk.Entry(total_row, textvariable=self.desconto_var, 
+                                 font=('Segoe UI', 10), width=8)
+        desconto_entry.pack(side=tk.LEFT, padx=(5, 5))
+        tk.Label(total_row, text="%", font=('Segoe UI', 10), 
+                bg='#f0f0f0', fg='#2c3e50').pack(side=tk.LEFT, padx=(0, 20))
         desconto_entry.bind('<KeyRelease>', self.atualizar_total)
         
-        # Total
-        self.total_label = tk.Label(totais_frame, text="Total: R$ 0,00", 
-                                   font=('Segoe UI', 14, 'bold'), 
-                                   bg='#f0f0f0', fg='#27ae60')
-        self.total_label.pack(side=tk.RIGHT)
+        tk.Label(total_row, text="TOTAL DA REMESSA R$", font=('Segoe UI', 12, 'bold'), 
+                bg='#f0f0f0', fg='#e74c3c').pack(side=tk.LEFT)
+        self.total_label = tk.Label(total_row, text="0,00", font=('Segoe UI', 14, 'bold'), 
+                                   bg='#f0f0f0', fg='#e74c3c')
+        self.total_label.pack(side=tk.LEFT, padx=5)
+        
+        obs_frame = tk.LabelFrame(main_frame, text="OBSERVAÇÕES GERAIS", 
+                                 font=('Segoe UI', 12, 'bold'),
+                                 bg='#f0f0f0', fg='#2c3e50', 
+                                 padx=15, pady=10)
+        obs_frame.pack(fill=tk.X, pady=(0, 15))
+        
+        self.observacoes_text = tk.Text(obs_frame, height=4, width=80, 
+                                       font=('Segoe UI', 10), wrap=tk.WORD)
+        self.observacoes_text.pack(fill=tk.X, pady=5)
+        
+        # Texto padrão das observações
+        obs_padrao = ("Observações Gerais: Solicito, Pedimos, Solicitamos, Requeremos Atenção\n"
+                     "Validade desta cotação: 30 dias\n"
+                     "Prazo de entrega: Conforme disponibilidade de estoque")
+        self.observacoes_text.insert(1.0, obs_padrao)
         
         # Botões finais
         buttons_frame = tk.Frame(main_frame, bg='#f0f0f0')
@@ -631,7 +750,19 @@ class CotacaoDialog:
             self.carregar_dados_cotacao()
         
         self.atualizar_lista_itens()
+        self.gerar_numero_cotacao()
     
+    def gerar_numero_cotacao(self):
+        """Gera número sequencial da cotação"""
+        if not self.id_cotacao:
+            # Nova cotação - gerar próximo número
+            cotacoes = self.cotacao_manager.listar_todas_cotacoes()
+            proximo_numero = len(cotacoes) + 1
+            self.numero_cotacao.config(text=f"{proximo_numero:03d}")
+        else:
+            # Cotação existente - usar ID
+            self.numero_cotacao.config(text=f"{self.id_cotacao:03d}")
+
     def carregar_dados_cotacao(self):
         """Carrega dados da cotação para edição"""
         cotacao = self.cotacao_atual
@@ -678,14 +809,20 @@ class CotacaoDialog:
         for item in self.itens_tree.get_children():
             self.itens_tree.delete(item)
         
-        # Adicionar itens
+        qtd_total = 0
         for item in self.itens_cotacao:
+            qtd_total += item.quantidade
             self.itens_tree.insert("", tk.END, values=(
                 item.produto.nome,
-                f"{item.quantidade} un",
+                f"{item.quantidade}",
+                "", "", "", "", "",  # Colunas A1-A5 vazias por enquanto
                 f"R$ {item.preco_unitario:.2f}",
+                f"R$ {item.preco_unitario:.2f}",  # Unitário = Preço
                 f"R$ {item.subtotal:.2f}"
             ))
+        
+        # Atualizar quantidade total
+        self.qtd_total_label.config(text=str(int(qtd_total)))
     
     def atualizar_total(self, event=None):
         """Atualiza o total da cotação"""
@@ -693,9 +830,9 @@ class CotacaoDialog:
             desconto = float(self.desconto_var.get() or 0)
             subtotal = sum(item.subtotal for item in self.itens_cotacao)
             total = subtotal * (1 - desconto / 100)
-            self.total_label.config(text=f"Total: R$ {total:.2f}")
+            self.total_label.config(text=f"{total:.2f}")
         except ValueError:
-            self.total_label.config(text="Total: R$ 0,00")
+            self.total_label.config(text="0,00")
     
     def salvar_cotacao(self):
         """Salva a cotação"""
@@ -747,6 +884,52 @@ class CotacaoDialog:
     def cancelar(self):
         """Cancela operação"""
         self.window.destroy()
+    
+    def on_cliente_selected(self, event=None):
+        """Preenche automaticamente os dados do cliente selecionado"""
+        if not self.cliente_var.get():
+            return
+            
+        try:
+            # Extrair ID do cliente
+            cliente_id = int(self.cliente_var.get().split(' - ')[0])
+            cliente = self.cliente_manager.buscar_cliente(cliente_id)
+            
+            if cliente:
+                self.projeto.delete(0, tk.END)
+                self.projeto.insert(0, getattr(cliente, 'projeto', ''))
+                
+                self.bairro.delete(0, tk.END)
+                self.bairro.insert(0, getattr(cliente, 'bairro', ''))
+                
+                # Montar endereço completo
+                endereco_parts = []
+                if hasattr(cliente, 'complemento') and cliente.complemento:
+                    endereco_parts.append(cliente.complemento)
+                if hasattr(cliente, 'cidade') and cliente.cidade:
+                    endereco_parts.append(cliente.cidade)
+                if hasattr(cliente, 'uf') and cliente.uf:
+                    endereco_parts.append(cliente.uf)
+                if hasattr(cliente, 'cep') and cliente.cep:
+                    endereco_parts.append(cliente.cep)
+                
+                self.endereco_completo.delete(0, tk.END)
+                self.endereco_completo.insert(0, ' - '.join(endereco_parts))
+                
+                self.endereco_entrega.delete(0, tk.END)
+                self.endereco_entrega.insert(0, getattr(cliente, 'endereco_entrega', ''))
+                
+                self.tel_fax.delete(0, tk.END)
+                self.tel_fax.insert(0, getattr(cliente, 'tel_fax', ''))
+                
+                self.inscricao_estadual.delete(0, tk.END)
+                self.inscricao_estadual.insert(0, getattr(cliente, 'inscricao_estadual', ''))
+                
+                self.condicoes_pagto.delete(0, tk.END)
+                self.condicoes_pagto.insert(0, getattr(cliente, 'condicoes_pagamento', ''))
+                
+        except (ValueError, IndexError):
+            pass  # Ignorar erros de parsing
 
 class ItemCotacaoDialog:
     def __init__(self, parent, produto_manager, callback):

@@ -11,12 +11,34 @@ class StatusPedido(Enum):
     CANCELADO = "cancelado"
 
 class Cliente:
-    def __init__(self, id_cliente: int, nome: str, email: str, telefone: str, endereco: str):
+    def __init__(self, id_cliente: int, nome: str, email: str, telefone: str, endereco: str,
+                 fantasia: str = "", condicoes_pagamento: str = "", bairro: str = "", 
+                 complemento: str = "", cidade: str = "", cep: str = "", 
+                 endereco_entrega: str = "", tel_fax: str = "", celular: str = "",
+                 contato: str = "", inscricao_estadual: str = "", cnpj: str = "",
+                 inscricao_municipal: str = "", email_xml: str = "", projeto: str = "", 
+                 uf: str = ""):
         self.id_cliente = id_cliente
         self.nome = nome
         self.email = email
         self.telefone = telefone
         self.endereco = endereco
+        self.fantasia = fantasia
+        self.condicoes_pagamento = condicoes_pagamento
+        self.bairro = bairro
+        self.complemento = complemento
+        self.cidade = cidade
+        self.cep = cep
+        self.endereco_entrega = endereco_entrega
+        self.tel_fax = tel_fax
+        self.celular = celular
+        self.contato = contato
+        self.inscricao_estadual = inscricao_estadual
+        self.cnpj = cnpj
+        self.inscricao_municipal = inscricao_municipal
+        self.email_xml = email_xml
+        self.projeto = projeto
+        self.uf = uf
         self.data_cadastro = datetime.now()
     
     def to_dict(self) -> Dict:
@@ -26,6 +48,22 @@ class Cliente:
             'email': self.email,
             'telefone': self.telefone,
             'endereco': self.endereco,
+            'fantasia': self.fantasia,
+            'condicoes_pagamento': self.condicoes_pagamento,
+            'bairro': self.bairro,
+            'complemento': self.complemento,
+            'cidade': self.cidade,
+            'cep': self.cep,
+            'endereco_entrega': self.endereco_entrega,
+            'tel_fax': self.tel_fax,
+            'celular': self.celular,
+            'contato': self.contato,
+            'inscricao_estadual': self.inscricao_estadual,
+            'cnpj': self.cnpj,
+            'inscricao_municipal': self.inscricao_municipal,
+            'email_xml': self.email_xml,
+            'projeto': self.projeto,
+            'uf': self.uf,
             'data_cadastro': self.data_cadastro.isoformat()
         }
     
@@ -36,7 +74,23 @@ class Cliente:
             data['nome'],
             data['email'],
             data['telefone'],
-            data['endereco']
+            data['endereco'],
+            data.get('fantasia', ''),
+            data.get('condicoes_pagamento', ''),
+            data.get('bairro', ''),
+            data.get('complemento', ''),
+            data.get('cidade', ''),
+            data.get('cep', ''),
+            data.get('endereco_entrega', ''),
+            data.get('tel_fax', ''),
+            data.get('celular', ''),
+            data.get('contato', ''),
+            data.get('inscricao_estadual', ''),
+            data.get('cnpj', ''),
+            data.get('inscricao_municipal', ''),
+            data.get('email_xml', ''),
+            data.get('projeto', ''),
+            data.get('uf', '')
         )
         cliente.data_cadastro = datetime.fromisoformat(data['data_cadastro'])
         return cliente

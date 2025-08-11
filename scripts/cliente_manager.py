@@ -45,12 +45,18 @@ class ClienteManager:
                 return True
         return False
     
-    def criar_cliente(self, nome: str, email: str, telefone: str, endereco: str) -> tuple[bool, str, Optional[Cliente]]:
+    def criar_cliente(self, nome: str, email: str, telefone: str, endereco: str, 
+                     fantasia: str = "", condicoes_pagamento: str = "", bairro: str = "",
+                     complemento: str = "", cidade: str = "", cep: str = "", 
+                     endereco_entrega: str = "", tel_fax: str = "", celular: str = "",
+                     contato: str = "", inscricao_estadual: str = "", cnpj: str = "",
+                     inscricao_municipal: str = "", email_xml: str = "", projeto: str = "",
+                     uf: str = "") -> tuple[bool, str, Optional[Cliente]]:
         """
-        Cria um novo cliente
+        Cria um novo cliente com todos os campos
         Retorna: (sucesso, mensagem, cliente_criado)
         """
-        # Validar dados
+        # Validar dados básicos
         erros = self._validar_dados_cliente(nome, email, telefone, endereco)
         if erros:
             return False, "Erros de validação: " + "; ".join(erros), None
@@ -59,18 +65,46 @@ class ClienteManager:
         if self._email_ja_existe(email):
             return False, "Email já cadastrado no sistema", None
         
-        # Criar cliente
+        # Criar cliente com todos os campos
         id_cliente = self.db.obter_proximo_id("cliente")
-        cliente = Cliente(id_cliente, nome.strip(), email.lower(), telefone, endereco.strip())
+        cliente = Cliente(
+            id_cliente=id_cliente,
+            nome=nome.strip(),
+            email=email.lower(),
+            telefone=telefone,
+            endereco=endereco.strip(),
+            fantasia=fantasia,
+            condicoes_pagamento=condicoes_pagamento,
+            bairro=bairro,
+            complemento=complemento,
+            cidade=cidade,
+            cep=cep,
+            endereco_entrega=endereco_entrega,
+            tel_fax=tel_fax,
+            celular=celular,
+            contato=contato,
+            inscricao_estadual=inscricao_estadual,
+            cnpj=cnpj,
+            inscricao_municipal=inscricao_municipal,
+            email_xml=email_xml,
+            projeto=projeto,
+            uf=uf
+        )
         
         # Salvar no banco
         self.db.salvar_cliente(cliente)
         
         return True, f"Cliente {nome} cadastrado com sucesso (ID: {id_cliente})", cliente
     
-    def atualizar_cliente(self, id_cliente: int, nome: str, email: str, telefone: str, endereco: str) -> tuple[bool, str]:
+    def atualizar_cliente(self, id_cliente: int, nome: str, email: str, telefone: str, 
+                         endereco: str, fantasia: str = "", condicoes_pagamento: str = "",
+                         bairro: str = "", complemento: str = "", cidade: str = "", 
+                         cep: str = "", endereco_entrega: str = "", tel_fax: str = "",
+                         celular: str = "", contato: str = "", inscricao_estadual: str = "",
+                         cnpj: str = "", inscricao_municipal: str = "", email_xml: str = "",
+                         projeto: str = "", uf: str = "") -> tuple[bool, str]:
         """
-        Atualiza dados de um cliente existente
+        Atualiza dados de um cliente existente com todos os campos
         Retorna: (sucesso, mensagem)
         """
         # Verificar se cliente existe
@@ -78,7 +112,7 @@ class ClienteManager:
         if not cliente_existente:
             return False, f"Cliente com ID {id_cliente} não encontrado"
         
-        # Validar dados
+        # Validar dados básicos
         erros = self._validar_dados_cliente(nome, email, telefone, endereco)
         if erros:
             return False, "Erros de validação: " + "; ".join(erros)
@@ -87,11 +121,27 @@ class ClienteManager:
         if self._email_ja_existe(email, id_cliente):
             return False, "Email já cadastrado para outro cliente"
         
-        # Atualizar dados
+        # Atualizar todos os dados
         cliente_existente.nome = nome.strip()
         cliente_existente.email = email.lower()
         cliente_existente.telefone = telefone
         cliente_existente.endereco = endereco.strip()
+        cliente_existente.fantasia = fantasia
+        cliente_existente.condicoes_pagamento = condicoes_pagamento
+        cliente_existente.bairro = bairro
+        cliente_existente.complemento = complemento
+        cliente_existente.cidade = cidade
+        cliente_existente.cep = cep
+        cliente_existente.endereco_entrega = endereco_entrega
+        cliente_existente.tel_fax = tel_fax
+        cliente_existente.celular = celular
+        cliente_existente.contato = contato
+        cliente_existente.inscricao_estadual = inscricao_estadual
+        cliente_existente.cnpj = cnpj
+        cliente_existente.inscricao_municipal = inscricao_municipal
+        cliente_existente.email_xml = email_xml
+        cliente_existente.projeto = projeto
+        cliente_existente.uf = uf
         
         # Salvar no banco
         self.db.salvar_cliente(cliente_existente)
@@ -199,12 +249,27 @@ class ClienteManager:
         }
     
     def formatar_cliente_para_exibicao(self, cliente: Cliente) -> str:
-        """Formata dados do cliente para exibição"""
+        """Formata dados do cliente para exibição completa"""
         return f"""
 ID: {cliente.id_cliente}
 Nome: {cliente.nome}
+Fantasia: {getattr(cliente, 'fantasia', '')}
 Email: {cliente.email}
+Email XML: {getattr(cliente, 'email_xml', '')}
 Telefone: {cliente.telefone}
+Celular: {getattr(cliente, 'celular', '')}
+Tel/Fax: {getattr(cliente, 'tel_fax', '')}
+Contato: {getattr(cliente, 'contato', '')}
 Endereço: {cliente.endereco}
+Bairro: {getattr(cliente, 'bairro', '')}
+Complemento: {getattr(cliente, 'complemento', '')}
+Cidade: {getattr(cliente, 'cidade', '')}
+UF: {getattr(cliente, 'uf', '')}
+CEP: {getattr(cliente, 'cep', '')}
+Endereço de Entrega: {getattr(cliente, 'endereco_entrega', '')}
+CNPJ: {getattr(cliente, 'cnpj', '')}
+Inscrição Estadual: {getattr(cliente, 'inscricao_estadual', '')}
+Inscrição Municipal: {getattr(cliente, 'inscricao_municipal', '')}
+Condições de Pagamento: {getattr(cliente, 'condicoes_pagamento', '')}
 Data de Cadastro: {cliente.data_cadastro.strftime('%d/%m/%Y %H:%M')}
 """

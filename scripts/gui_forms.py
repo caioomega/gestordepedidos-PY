@@ -12,16 +12,16 @@ class ClienteForm:
         # Criar janela
         self.window = tk.Toplevel(parent)
         self.window.title("Cliente" if cliente is None else f"Editar Cliente - {cliente.nome}")
-        self.window.geometry("500x400")
+        self.window.geometry("600x700")
         self.window.resizable(False, False)
         self.window.transient(parent)
         self.window.grab_set()
         
         # Centralizar janela
         self.window.update_idletasks()
-        x = (self.window.winfo_screenwidth() // 2) - (500 // 2)
-        y = (self.window.winfo_screenheight() // 2) - (400 // 2)
-        self.window.geometry(f"500x400+{x}+{y}")
+        x = (self.window.winfo_screenwidth() // 2) - (600 // 2)
+        y = (self.window.winfo_screenheight() // 2) - (700 // 2)
+        self.window.geometry(f"600x700+{x}+{y}")
         
         self.setup_ui()
         
@@ -33,41 +33,146 @@ class ClienteForm:
     
     def setup_ui(self):
         """Configura interface do formulário"""
-        # Frame principal
-        main_frame = ttk.Frame(self.window, padding=20)
-        main_frame.pack(fill=tk.BOTH, expand=True)
+        # Frame principal com scroll
+        canvas = tk.Canvas(self.window)
+        scrollbar = ttk.Scrollbar(self.window, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas, padding=20)
+        
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
         
         # Título
         title = "Novo Cliente" if self.cliente is None else "Editar Cliente"
-        ttk.Label(main_frame, text=title, font=('Arial', 14, 'bold')).pack(pady=(0, 20))
+        ttk.Label(scrollable_frame, text=title, font=('Arial', 14, 'bold')).pack(pady=(0, 20))
         
-        # Campos do formulário
+        basic_frame = ttk.LabelFrame(scrollable_frame, text="Dados Básicos", padding=15)
+        basic_frame.pack(fill=tk.X, pady=(0, 15))
+        
         # Nome
-        ttk.Label(main_frame, text="Nome *:").pack(anchor=tk.W)
+        ttk.Label(basic_frame, text="Nome *:").pack(anchor=tk.W)
         self.nome_var = tk.StringVar()
-        ttk.Entry(main_frame, textvariable=self.nome_var, width=50).pack(fill=tk.X, pady=(0, 10))
+        ttk.Entry(basic_frame, textvariable=self.nome_var, width=60).pack(fill=tk.X, pady=(0, 10))
+        
+        # Fantasia
+        ttk.Label(basic_frame, text="Fantasia:").pack(anchor=tk.W)
+        self.fantasia_var = tk.StringVar()
+        ttk.Entry(basic_frame, textvariable=self.fantasia_var, width=60).pack(fill=tk.X, pady=(0, 10))
         
         # Email
-        ttk.Label(main_frame, text="Email *:").pack(anchor=tk.W)
+        ttk.Label(basic_frame, text="Email *:").pack(anchor=tk.W)
         self.email_var = tk.StringVar()
-        ttk.Entry(main_frame, textvariable=self.email_var, width=50).pack(fill=tk.X, pady=(0, 10))
+        ttk.Entry(basic_frame, textvariable=self.email_var, width=60).pack(fill=tk.X, pady=(0, 10))
         
-        # Telefone
-        ttk.Label(main_frame, text="Telefone *:").pack(anchor=tk.W)
+        # Email XML
+        ttk.Label(basic_frame, text="Email XML:").pack(anchor=tk.W)
+        self.email_xml_var = tk.StringVar()
+        ttk.Entry(basic_frame, textvariable=self.email_xml_var, width=60).pack(fill=tk.X, pady=(0, 10))
+        
+        contato_frame = ttk.LabelFrame(scrollable_frame, text="Contato", padding=15)
+        contato_frame.pack(fill=tk.X, pady=(0, 15))
+        
+        # Telefone e Celular em linha
+        tel_row = ttk.Frame(contato_frame)
+        tel_row.pack(fill=tk.X, pady=(0, 10))
+        
+        ttk.Label(tel_row, text="Telefone *:").grid(row=0, column=0, sticky=tk.W)
         self.telefone_var = tk.StringVar()
-        ttk.Entry(main_frame, textvariable=self.telefone_var, width=50).pack(fill=tk.X, pady=(0, 10))
+        ttk.Entry(tel_row, textvariable=self.telefone_var, width=25).grid(row=0, column=1, padx=(5, 10))
+        
+        ttk.Label(tel_row, text="Celular:").grid(row=0, column=2, sticky=tk.W)
+        self.celular_var = tk.StringVar()
+        ttk.Entry(tel_row, textvariable=self.celular_var, width=25).grid(row=0, column=3, padx=(5, 0))
+        
+        # Tel/Fax
+        ttk.Label(contato_frame, text="Tel/Fax:").pack(anchor=tk.W)
+        self.tel_fax_var = tk.StringVar()
+        ttk.Entry(contato_frame, textvariable=self.tel_fax_var, width=60).pack(fill=tk.X, pady=(0, 10))
+        
+        # Contato
+        ttk.Label(contato_frame, text="Contato:").pack(anchor=tk.W)
+        self.contato_var = tk.StringVar()
+        ttk.Entry(contato_frame, textvariable=self.contato_var, width=60).pack(fill=tk.X, pady=(0, 10))
+        
+        endereco_frame = ttk.LabelFrame(scrollable_frame, text="Endereço", padding=15)
+        endereco_frame.pack(fill=tk.X, pady=(0, 15))
         
         # Endereço
-        ttk.Label(main_frame, text="Endereço *:").pack(anchor=tk.W)
-        self.endereco_text = tk.Text(main_frame, height=4, width=50)
+        ttk.Label(endereco_frame, text="Endereço *:").pack(anchor=tk.W)
+        self.endereco_text = tk.Text(endereco_frame, height=3, width=60)
         self.endereco_text.pack(fill=tk.X, pady=(0, 10))
         
+        # Bairro e Complemento em linha
+        bairro_row = ttk.Frame(endereco_frame)
+        bairro_row.pack(fill=tk.X, pady=(0, 10))
+        
+        ttk.Label(bairro_row, text="Bairro:").grid(row=0, column=0, sticky=tk.W)
+        self.bairro_var = tk.StringVar()
+        ttk.Entry(bairro_row, textvariable=self.bairro_var, width=25).grid(row=0, column=1, padx=(5, 10))
+        
+        ttk.Label(bairro_row, text="Complemento:").grid(row=0, column=2, sticky=tk.W)
+        self.complemento_var = tk.StringVar()
+        ttk.Entry(bairro_row, textvariable=self.complemento_var, width=25).grid(row=0, column=3, padx=(5, 0))
+        
+        # Cidade, UF e CEP em linha
+        cidade_row = ttk.Frame(endereco_frame)
+        cidade_row.pack(fill=tk.X, pady=(0, 10))
+        
+        ttk.Label(cidade_row, text="Cidade:").grid(row=0, column=0, sticky=tk.W)
+        self.cidade_var = tk.StringVar()
+        ttk.Entry(cidade_row, textvariable=self.cidade_var, width=20).grid(row=0, column=1, padx=(5, 10))
+        
+        ttk.Label(cidade_row, text="UF:").grid(row=0, column=2, sticky=tk.W)
+        self.uf_var = tk.StringVar()
+        ttk.Entry(cidade_row, textvariable=self.uf_var, width=5).grid(row=0, column=3, padx=(5, 10))
+        
+        ttk.Label(cidade_row, text="CEP:").grid(row=0, column=4, sticky=tk.W)
+        self.cep_var = tk.StringVar()
+        ttk.Entry(cidade_row, textvariable=self.cep_var, width=15).grid(row=0, column=5, padx=(5, 0))
+        
+        # Endereço de Entrega
+        ttk.Label(endereco_frame, text="Endereço de Entrega:").pack(anchor=tk.W)
+        self.endereco_entrega_var = tk.StringVar()
+        ttk.Entry(endereco_frame, textvariable=self.endereco_entrega_var, width=60).pack(fill=tk.X, pady=(0, 10))
+        
+        comercial_frame = ttk.LabelFrame(scrollable_frame, text="Dados Comerciais", padding=15)
+        comercial_frame.pack(fill=tk.X, pady=(0, 15))
+        
+        # CNPJ
+        ttk.Label(comercial_frame, text="CNPJ:").pack(anchor=tk.W)
+        self.cnpj_var = tk.StringVar()
+        ttk.Entry(comercial_frame, textvariable=self.cnpj_var, width=60).pack(fill=tk.X, pady=(0, 10))
+        
+        # Inscrições em linha
+        inscricao_row = ttk.Frame(comercial_frame)
+        inscricao_row.pack(fill=tk.X, pady=(0, 10))
+        
+        ttk.Label(inscricao_row, text="Inscrição Estadual:").grid(row=0, column=0, sticky=tk.W)
+        self.inscricao_estadual_var = tk.StringVar()
+        ttk.Entry(inscricao_row, textvariable=self.inscricao_estadual_var, width=25).grid(row=0, column=1, padx=(5, 10))
+        
+        ttk.Label(inscricao_row, text="Inscrição Municipal:").grid(row=0, column=2, sticky=tk.W)
+        self.inscricao_municipal_var = tk.StringVar()
+        ttk.Entry(inscricao_row, textvariable=self.inscricao_municipal_var, width=25).grid(row=0, column=3, padx=(5, 0))
+        
+        # Condições de Pagamento
+        ttk.Label(comercial_frame, text="Condições de Pagamento:").pack(anchor=tk.W)
+        self.condicoes_pagamento_var = tk.StringVar()
+        ttk.Entry(comercial_frame, textvariable=self.condicoes_pagamento_var, width=60).pack(fill=tk.X, pady=(0, 10))
+        
         # Nota sobre campos obrigatórios
-        ttk.Label(main_frame, text="* Campos obrigatórios", 
+        ttk.Label(scrollable_frame, text="* Campos obrigatórios", 
                  font=('Arial', 8), foreground='gray').pack(anchor=tk.W, pady=(0, 20))
         
         # Botões
-        buttons_frame = ttk.Frame(main_frame)
+        buttons_frame = ttk.Frame(scrollable_frame)
         buttons_frame.pack(fill=tk.X)
         
         ttk.Button(buttons_frame, text="Cancelar", 
@@ -82,32 +187,68 @@ class ClienteForm:
     def carregar_dados_cliente(self):
         """Carrega dados do cliente para edição"""
         self.nome_var.set(self.cliente.nome)
+        self.fantasia_var.set(getattr(self.cliente, 'fantasia', ''))
         self.email_var.set(self.cliente.email)
+        self.email_xml_var.set(getattr(self.cliente, 'email_xml', ''))
         self.telefone_var.set(self.cliente.telefone)
+        self.celular_var.set(getattr(self.cliente, 'celular', ''))
+        self.tel_fax_var.set(getattr(self.cliente, 'tel_fax', ''))
+        self.contato_var.set(getattr(self.cliente, 'contato', ''))
         self.endereco_text.insert(1.0, self.cliente.endereco)
+        self.bairro_var.set(getattr(self.cliente, 'bairro', ''))
+        self.complemento_var.set(getattr(self.cliente, 'complemento', ''))
+        self.cidade_var.set(getattr(self.cliente, 'cidade', ''))
+        self.uf_var.set(getattr(self.cliente, 'uf', ''))
+        self.cep_var.set(getattr(self.cliente, 'cep', ''))
+        self.endereco_entrega_var.set(getattr(self.cliente, 'endereco_entrega', ''))
+        self.cnpj_var.set(getattr(self.cliente, 'cnpj', ''))
+        self.inscricao_estadual_var.set(getattr(self.cliente, 'inscricao_estadual', ''))
+        self.inscricao_municipal_var.set(getattr(self.cliente, 'inscricao_municipal', ''))
+        self.condicoes_pagamento_var.set(getattr(self.cliente, 'condicoes_pagamento', ''))
     
     def salvar(self):
         """Salva cliente"""
         try:
-            # Obter dados
+            # Obter dados básicos
             nome = self.nome_var.get().strip()
+            fantasia = self.fantasia_var.get().strip()
             email = self.email_var.get().strip()
+            email_xml = self.email_xml_var.get().strip()
             telefone = self.telefone_var.get().strip()
+            celular = self.celular_var.get().strip()
+            tel_fax = self.tel_fax_var.get().strip()
+            contato = self.contato_var.get().strip()
             endereco = self.endereco_text.get(1.0, tk.END).strip()
+            bairro = self.bairro_var.get().strip()
+            complemento = self.complemento_var.get().strip()
+            cidade = self.cidade_var.get().strip()
+            uf = self.uf_var.get().strip()
+            cep = self.cep_var.get().strip()
+            endereco_entrega = self.endereco_entrega_var.get().strip()
+            cnpj = self.cnpj_var.get().strip()
+            inscricao_estadual = self.inscricao_estadual_var.get().strip()
+            inscricao_municipal = self.inscricao_municipal_var.get().strip()
+            condicoes_pagamento = self.condicoes_pagamento_var.get().strip()
             
             # Validar campos obrigatórios
             if not all([nome, email, telefone, endereco]):
-                messagebox.showerror("Erro", "Todos os campos são obrigatórios!")
+                messagebox.showerror("Erro", "Todos os campos básicos são obrigatórios!")
                 return
             
             # Salvar ou atualizar
             if self.cliente is None:
                 # Novo cliente
-                sucesso, mensagem, cliente_criado = self.cliente_manager.criar_cliente(nome, email, telefone, endereco)
+                sucesso, mensagem, cliente_criado = self.cliente_manager.criar_cliente(
+                    nome, email, telefone, endereco, fantasia, condicoes_pagamento, bairro,
+                    complemento, cidade, cep, endereco_entrega, tel_fax, celular, contato,
+                    inscricao_estadual, cnpj, inscricao_municipal, email_xml, "", uf)
             else:
                 # Atualizar cliente
                 sucesso, mensagem = self.cliente_manager.atualizar_cliente(
-                    self.cliente.id_cliente, nome, email, telefone, endereco)
+                    self.cliente.id_cliente, nome, email, telefone, endereco, fantasia,
+                    condicoes_pagamento, bairro, complemento, cidade, cep, endereco_entrega,
+                    tel_fax, celular, contato, inscricao_estadual, cnpj, inscricao_municipal,
+                    email_xml, "", uf)
             
             if sucesso:
                 messagebox.showinfo("Sucesso", mensagem)
