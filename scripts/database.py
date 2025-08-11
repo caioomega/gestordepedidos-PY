@@ -1,7 +1,7 @@
 import json
 import os
 from typing import List, Dict, Optional
-from models import Cliente, Produto, Pedido
+from models import Cliente, Produto, Pedido, Cotacao
 
 class Database:
     def __init__(self, data_dir: str = "data"):
@@ -9,6 +9,7 @@ class Database:
         self.clientes_file = os.path.join(data_dir, "clientes.json")
         self.produtos_file = os.path.join(data_dir, "produtos.json")
         self.pedidos_file = os.path.join(data_dir, "pedidos.json")
+        self.cotacoes_file = os.path.join(data_dir, "cotacoes.json")
         self.contadores_file = os.path.join(data_dir, "contadores.json")
         
         # Criar diretório se não existir
@@ -22,7 +23,8 @@ class Database:
             self.clientes_file: [],
             self.produtos_file: [],
             self.pedidos_file: [],
-            self.contadores_file: {"cliente": 1, "produto": 1, "pedido": 1}
+            self.cotacoes_file: [],
+            self.contadores_file: {"cliente": 1, "produto": 1, "pedido": 1, "cotacao": 1}
         }
         
         for arquivo, conteudo_inicial in arquivos_iniciais.items():
@@ -35,7 +37,7 @@ class Database:
             with open(arquivo, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except (FileNotFoundError, json.JSONDecodeError):
-            return [] if arquivo != self.contadores_file else {"cliente": 1, "produto": 1, "pedido": 1}
+            return [] if arquivo != self.contadores_file else {"cliente": 1, "produto": 1, "pedido": 1, "cotacao": 1}
     
     def _salvar_json(self, arquivo: str, dados):
         with open(arquivo, 'w', encoding='utf-8') as f:
@@ -145,5 +147,38 @@ class Database:
         
         if len(pedidos_filtrados) < len(pedidos_data):
             self._salvar_json(self.pedidos_file, pedidos_filtrados)
+            return True
+        return False
+    
+    # Métodos para Cotações
+    def salvar_cotacao(self, cotacao: Cotacao):
+        cotacoes_data = self._carregar_json(self.cotacoes_file)
+        
+        for i, cotacao_data in enumerate(cotacoes_data):
+            if cotacao_data['id_cotacao'] == cotacao.id_cotacao:
+                cotacoes_data[i] = cotacao.to_dict()
+                break
+        else:
+            cotacoes_data.append(cotacao.to_dict())
+        
+        self._salvar_json(self.cotacoes_file, cotacoes_data)
+    
+    def carregar_cotacoes(self) -> List[Cotacao]:
+        cotacoes_data = self._carregar_json(self.cotacoes_file)
+        return [Cotacao.from_dict(data) for data in cotacoes_data]
+    
+    def buscar_cotacao(self, id_cotacao: int) -> Optional[Cotacao]:
+        cotacoes = self.carregar_cotacoes()
+        for cotacao in cotacoes:
+            if cotacao.id_cotacao == id_cotacao:
+                return cotacao
+        return None
+    
+    def remover_cotacao(self, id_cotacao: int) -> bool:
+        cotacoes_data = self._carregar_json(self.cotacoes_file)
+        cotacoes_filtradas = [c for c in cotacoes_data if c['id_cotacao'] != id_cotacao]
+        
+        if len(cotacoes_filtradas) < len(cotacoes_data):
+            self._salvar_json(self.cotacoes_file, cotacoes_filtradas)
             return True
         return False

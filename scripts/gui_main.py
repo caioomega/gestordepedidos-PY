@@ -11,6 +11,7 @@ from cliente_manager import ClienteManager
 from produto_manager import ProdutoManager
 from pedido_manager import PedidoManager
 from models import StatusPedido
+from cotacao_manager import CotacaoManager
 
 plt.style.use('seaborn-v0_8')
 plt.rcParams['font.size'] = 10
@@ -20,9 +21,13 @@ plt.rcParams['axes.labelsize'] = 10
 class SistemaGestorPedidosGUI:
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title("Sistema de Gestão de Pedidos - Professional Edition")
+        self.root.title("Sistema Gestor de Pedidos - Profissional")
         self.root.geometry("1400x900")
         self.root.state('zoomed')
+        
+        # Configurar estilo
+        self.style = ttk.Style()
+        self.style.theme_use('clam')
         
         self.cores = {
             'primary': '#2E86AB',
@@ -36,12 +41,14 @@ class SistemaGestorPedidosGUI:
         
         self.setup_styles()
         
-        # Inicializar managers
+        # Inicializar banco de dados e managers
         self.db = Database()
         self.cliente_manager = ClienteManager(self.db)
         self.produto_manager = ProdutoManager(self.db)
         self.pedido_manager = PedidoManager(self.db)
+        self.cotacao_manager = CotacaoManager(self.db)
         
+        # Configurar interface
         self.setup_ui()
         self.carregar_dados_iniciais()
 
@@ -66,6 +73,7 @@ class SistemaGestorPedidosGUI:
         self.create_clientes_tab()
         self.create_produtos_tab()
         self.create_pedidos_tab()
+        self.create_cotacoes_tab()
         self.create_graficos_tab()
         self.create_relatorios_tab()
         
@@ -384,6 +392,222 @@ class SistemaGestorPedidosGUI:
         ttk.Button(buttons_frame, text="Ver Detalhes", command=self.ver_detalhes_pedido).pack(side=tk.LEFT, padx=5)
         ttk.Button(buttons_frame, text="Alterar Status", command=self.alterar_status_pedido).pack(side=tk.LEFT, padx=5)
         ttk.Button(buttons_frame, text="Cancelar Pedido", command=self.cancelar_pedido_selecionado).pack(side=tk.LEFT, padx=5)
+
+    def create_cotacoes_tab(self):
+        """Cria aba de cotações"""
+        cotacoes_frame = ttk.Frame(self.notebook)
+        self.notebook.add(cotacoes_frame, text="💰 Cotações")
+        
+        # Frame superior com filtros e botões
+        top_frame = ttk.Frame(cotacoes_frame)
+        top_frame.pack(fill=tk.X, padx=10, pady=5)
+        
+        # Frame de filtros
+        filtros_frame = ttk.LabelFrame(top_frame, text="Filtros", padding=10)
+        filtros_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        
+        # Filtro por status
+        ttk.Label(filtros_frame, text="Status:").pack(side=tk.LEFT, padx=5)
+        self.filtro_status_cotacao = ttk.Combobox(filtros_frame, values=["Todos", "Pendente", "Aprovada", "Rejeitada", "Expirada"], 
+                                                 state="readonly", width=15)
+        self.filtro_status_cotacao.set("Todos")
+        self.filtro_status_cotacao.pack(side=tk.LEFT, padx=5)
+        self.filtro_status_cotacao.bind('<<ComboboxSelected>>', lambda e: self.carregar_cotacoes())
+        
+        # Frame de botões
+        botoes_frame = ttk.Frame(top_frame)
+        botoes_frame.pack(side=tk.RIGHT, padx=10)
+        
+        ttk.Button(botoes_frame, text="➕ Nova Cotação", command=self.nova_cotacao).pack(side=tk.LEFT, padx=2)
+        ttk.Button(botoes_frame, text="✏️ Editar", command=self.editar_cotacao).pack(side=tk.LEFT, padx=2)
+        ttk.Button(botoes_frame, text="👁️ Visualizar", command=self.visualizar_cotacao).pack(side=tk.LEFT, padx=2)
+        ttk.Button(botoes_frame, text="🔄 Status", command=self.alterar_status_cotacao).pack(side=tk.LEFT, padx=2)
+        ttk.Button(botoes_frame, text="🗑️ Excluir", command=self.excluir_cotacao).pack(side=tk.LEFT, padx=2)
+        ttk.Button(botoes_frame, text="🔄 Atualizar", command=self.carregar_cotacoes).pack(side=tk.LEFT, padx=2)
+        
+        # Frame da tabela
+        table_frame = ttk.Frame(cotacoes_frame)
+        table_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
+        
+        # Treeview para cotações
+        columns = ("ID", "Cliente", "Data", "Validade", "Status", "Itens", "Total")
+        self.cotacoes_tree = ttk.Treeview(table_frame, columns=columns, show="headings", height=15)
+        
+        # Configurar colunas
+        self.cotacoes_tree.heading("ID", text="ID")
+        self.cotacoes_tree.heading("Cliente", text="Cliente")
+        self.cotacoes_tree.heading("Data", text="Data")
+        self.cotacoes_tree.heading("Validade", text="Validade")
+        self.cotacoes_tree.heading("Status", text="Status")
+        self.cotacoes_tree.heading("Itens", text="Qtd Itens")
+        self.cotacoes_tree.heading("Total", text="Total (R$)")
+        
+        # Configurar larguras
+        self.cotacoes_tree.column("ID", width=50)
+        self.cotacoes_tree.column("Cliente", width=200)
+        self.cotacoes_tree.column("Data", width=100)
+        self.cotacoes_tree.column("Validade", width=100)
+        self.cotacoes_tree.column("Status", width=100)
+        self.cotacoes_tree.column("Itens", width=80)
+        self.cotacoes_tree.column("Total", width=120)
+        
+        # Scrollbar
+        scrollbar_cotacoes = ttk.Scrollbar(table_frame, orient=tk.VERTICAL, command=self.cotacoes_tree.yview)
+        self.cotacoes_tree.configure(yscrollcommand=scrollbar_cotacoes.set)
+        
+        # Pack
+        self.cotacoes_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar_cotacoes.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # Bind duplo clique
+        self.cotacoes_tree.bind("<Double-1>", lambda e: self.visualizar_cotacao())
+
+    def carregar_cotacoes(self):
+        """Carrega cotações na tabela"""
+        for item in self.cotacoes_tree.get_children():
+            self.cotacoes_tree.delete(item)
+        
+        # Verificar cotações expiradas
+        self.cotacao_manager.verificar_cotacoes_expiradas()
+        
+        cotacoes = self.cotacao_manager.listar_todas_cotacoes()
+        filtro_status = self.filtro_status_cotacao.get()
+        
+        for cotacao in cotacoes:
+            if filtro_status == "Todos" or cotacao.status == filtro_status:
+                # Buscar nome do cliente
+                cliente = self.cliente_manager.buscar_cliente_por_id(cotacao.id_cliente)
+                nome_cliente = cliente.nome if cliente else f"Cliente {cotacao.id_cliente}"
+                
+                # Calcular data de validade
+                data_cotacao = datetime.strptime(cotacao.data_cotacao, "%Y-%m-%d")
+                data_validade = data_cotacao + timedelta(days=cotacao.validade_dias)
+                
+                # Configurar cor baseada no status
+                tags = []
+                if cotacao.status == "Pendente":
+                    tags = ["pendente"]
+                elif cotacao.status == "Aprovada":
+                    tags = ["aprovada"]
+                elif cotacao.status == "Rejeitada":
+                    tags = ["rejeitada"]
+                elif cotacao.status == "Expirada":
+                    tags = ["expirada"]
+                
+                self.cotacoes_tree.insert("", tk.END, values=(
+                    cotacao.id_cotacao,
+                    nome_cliente,
+                    cotacao.data_cotacao,
+                    data_validade.strftime("%Y-%m-%d"),
+                    cotacao.status,
+                    len(cotacao.itens),
+                    f"{cotacao.total:.2f}"
+                ), tags=tags)
+        
+        # Configurar cores das tags
+        self.cotacoes_tree.tag_configure("pendente", background="#fff3cd")
+        self.cotacoes_tree.tag_configure("aprovada", background="#d4edda")
+        self.cotacoes_tree.tag_configure("rejeitada", background="#f8d7da")
+        self.cotacoes_tree.tag_configure("expirada", background="#e2e3e5")
+
+    def nova_cotacao(self):
+        """Abre diálogo para nova cotação"""
+        from gui_dialogs import CotacaoDialog
+        dialog = CotacaoDialog(self.root, self.cotacao_manager, self.cliente_manager, self.produto_manager)
+        if dialog.result:
+            self.carregar_cotacoes()
+            self.atualizar_dashboard()
+
+    def editar_cotacao(self):
+        """Edita cotação selecionada"""
+        selection = self.cotacoes_tree.selection()
+        if not selection:
+            messagebox.showwarning("Aviso", "Selecione uma cotação para editar.")
+            return
+        
+        item = self.cotacoes_tree.item(selection[0])
+        id_cotacao = int(item['values'][0])
+        
+        from gui_dialogs import CotacaoDialog
+        dialog = CotacaoDialog(self.root, self.cotacao_manager, self.cliente_manager, 
+                              self.produto_manager, id_cotacao)
+        if dialog.result:
+            self.carregar_cotacoes()
+            self.atualizar_dashboard()
+
+    def visualizar_cotacao(self):
+        """Visualiza cotação selecionada"""
+        selection = self.cotacoes_tree.selection()
+        if not selection:
+            messagebox.showwarning("Aviso", "Selecione uma cotação para visualizar.")
+            return
+        
+        item = self.cotacoes_tree.item(selection[0])
+        id_cotacao = int(item['values'][0])
+        
+        from gui_dialogs import VisualizarCotacaoDialog
+        VisualizarCotacaoDialog(self.root, self.cotacao_manager, self.cliente_manager, id_cotacao)
+
+    def alterar_status_cotacao(self):
+        """Altera status da cotação selecionada"""
+        selection = self.cotacoes_tree.selection()
+        if not selection:
+            messagebox.showwarning("Aviso", "Selecione uma cotação para alterar o status.")
+            return
+        
+        item = self.cotacoes_tree.item(selection[0])
+        id_cotacao = int(item['values'][0])
+        status_atual = item['values'][4]
+        
+        # Diálogo para escolher novo status
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Alterar Status")
+        dialog.geometry("300x150")
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Centralizar
+        dialog.geometry("+%d+%d" % (self.root.winfo_rootx() + 50, self.root.winfo_rooty() + 50))
+        
+        ttk.Label(dialog, text=f"Status atual: {status_atual}").pack(pady=10)
+        ttk.Label(dialog, text="Novo status:").pack()
+        
+        status_var = tk.StringVar(value=status_atual)
+        status_combo = ttk.Combobox(dialog, textvariable=status_var, 
+                                   values=["Pendente", "Aprovada", "Rejeitada", "Expirada"],
+                                   state="readonly")
+        status_combo.pack(pady=5)
+        
+        def confirmar():
+            novo_status = status_var.get()
+            if self.cotacao_manager.alterar_status_cotacao(id_cotacao, novo_status):
+                messagebox.showinfo("Sucesso", "Status alterado com sucesso!")
+                self.carregar_cotacoes()
+                self.atualizar_dashboard()
+                dialog.destroy()
+            else:
+                messagebox.showerror("Erro", "Erro ao alterar status.")
+        
+        ttk.Button(dialog, text="Confirmar", command=confirmar).pack(pady=10)
+
+    def excluir_cotacao(self):
+        """Exclui cotação selecionada"""
+        selection = self.cotacoes_tree.selection()
+        if not selection:
+            messagebox.showwarning("Aviso", "Selecione uma cotação para excluir.")
+            return
+        
+        item = self.cotacoes_tree.item(selection[0])
+        id_cotacao = int(item['values'][0])
+        cliente_nome = item['values'][1]
+        
+        if messagebox.askyesno("Confirmar", f"Deseja realmente excluir a cotação #{id_cotacao} do cliente {cliente_nome}?"):
+            if self.cotacao_manager.excluir_cotacao(id_cotacao):
+                messagebox.showinfo("Sucesso", "Cotação excluída com sucesso!")
+                self.carregar_cotacoes()
+                self.atualizar_dashboard()
+            else:
+                messagebox.showerror("Erro", "Erro ao excluir cotação.")
 
     def create_graficos_tab(self):
         """Cria aba de gráficos e análises"""
@@ -895,6 +1119,7 @@ class SistemaGestorPedidosGUI:
         self.carregar_clientes()
         self.carregar_produtos()
         self.carregar_pedidos()
+        self.carregar_cotacoes()
         self.atualizar_dashboard()
 
     def carregar_clientes(self):
@@ -1066,10 +1291,5 @@ Para suporte técnico ou dúvidas, entre em contato através dos canais acima.
                 messagebox.showerror("Erro", f"Erro ao remover produto: {str(e)}")
 
 if __name__ == "__main__":
-    import sys
-    if getattr(sys, 'frozen', False):
-        # Executando como .exe
-        import os
-        os.chdir(os.path.dirname(sys.executable))
     app = SistemaGestorPedidosGUI()
     app.run()
